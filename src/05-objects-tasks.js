@@ -20,8 +20,12 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea: () => width * height,
+  };
 }
 
 
@@ -35,8 +39,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +55,8 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return Object.setPrototypeOf(JSON.parse(json), proto);
 }
 
 
@@ -111,35 +115,99 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  currentSelector: '',
+  currentOrder: 0,
+  currentSelectorType: '',
+
+  stringify() {
+    const { currentSelector } = this;
+    this.currentSelector = '';
+    return currentSelector;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  checkCurrentOrder(object) {
+    if (this.currentOrder === object.currentOrder && (
+      object.currentSelectorType === 'element'
+        || object.currentSelectorType === 'id'
+        || object.currentSelectorType === 'pseudoElement'
+    )) throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    if (this.currentOrder > object.currentOrder) throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    const obj = {
+      currentSelector: `${this.currentSelector}${value}`,
+      currentOrder: 1,
+      currentSelectorType: 'element',
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    this.checkCurrentOrder(obj);
+    return obj;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    const obj = {
+      currentSelector: `${this.currentSelector}#${value}`,
+      currentOrder: 2,
+      currentSelectorType: 'id',
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    this.checkCurrentOrder(obj);
+    return obj;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    const obj = {
+      currentSelector: `${this.currentSelector}.${value}`,
+      currentOrder: 3,
+      currentSelectorType: 'class',
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    this.checkCurrentOrder(obj);
+    return obj;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    const obj = {
+      currentSelector: `${this.currentSelector}[${value}]`,
+      currentOrder: 4,
+      currentSelectorType: 'attr',
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    this.checkCurrentOrder(obj);
+    return obj;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    const obj = {
+      currentSelector: `${this.currentSelector}:${value}`,
+      currentOrder: 5,
+      currentSelectorType: 'pseudoClass',
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    this.checkCurrentOrder(obj);
+    return obj;
+  },
+
+  pseudoElement(value) {
+    const obj = {
+      currentSelector: `${this.currentSelector}::${value}`,
+      currentOrder: 6,
+      currentSelectorType: 'pseudoElement',
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    this.checkCurrentOrder(obj);
+    return obj;
+  },
+
+  combine(selector1, combinator, selector2) {
+    const obj = {
+      currentSelector: `${selector1.currentSelector} ${combinator} ${selector2.currentSelector}`,
+    };
+    Object.setPrototypeOf(obj, cssSelectorBuilder);
+    return obj;
   },
 };
-
 
 module.exports = {
   Rectangle,
